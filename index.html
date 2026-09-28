@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asesmen Sumatif Pendidikan Pancasila - MTs Mu'allimin NU</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 9999px; }
+    </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 flex flex-col justify-between">
+
+    <div id="app" class="flex-grow flex flex-col">
+        <!-- Dynamic views rendered here via JS -->
+    </div>
+
+    <!-- Global Custom Modal / Notification Box (Replaces alert/confirm) -->
+    <div id="customModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center transform transition-all scale-95 opacity-0" id="modalContainer">
+            <div id="modalIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"></div>
+            <h3 id="modalTitle" class="text-xl font-bold text-slate-900 mb-2"></h3>
+            <p id="modalMessage" class="text-slate-600 mb-6 text-sm leading-relaxed"></p>
+            <div id="modalButtons" class="flex justify-center space-x-3"></div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_ADMIN = {
+            username: 'adminmuallimin',
+            password: '123'
+        };
+
+        // Default Question Bank (35 Questions for Grade 9 PKn: 15 MC, 10 Complex MC, 10 Matching)
+        const DEFAULT_QUESTIONS = [
+            // --- 15 PILIHAN GANDA (1-15): Hubungan Pancasila dengan UUD NRI 1945, Bhinneka Tunggal Ika, NKRI ---
+            {
+                id: 1, type: 'mc',
+                question: 'Di sebuah desa multikultural, warga dari berbagai suku dan agama bergotong royong membangun balai desa tanpa membedakan latar belakang. Tindakan ini mencerminkan pengamalan sila ketiga Pancasila yang bersatu padu dalam wadah...',
+                options: {
+                    A: 'Negara Kesatuan Republik Indonesia (NKRI)',
+                    B: 'Negara federal dengan otonomi khusus',
+                    C: 'Aliansi regional antar suku bangsa',
+                    D: 'Negara serikat yang terdesentralisasi'
+                },
+                correct: 'A'
+            },
+            {
+                id: 2, type: 'mc',
+                question: 'Pembukaan UUD NRI Tahun 1945 alinea keempat menempatkan Pancasila sebagai dasar negara yang sah dan mengikat seluruh penyelenggaraan pemerintahan. Hubungan fundamental antara Pancasila dan UUD NRI Tahun 1945 adalah...',
+                options: {
+                    A: 'UUD NRI 1945 merupakan penjabaran operasional dan hukum dari nilai-nilai dasar Pancasila',
+                    B: 'Pancasila hanya sebagai simbol historis yang terpisah dari batang tubuh UUD',
+                    C: 'UUD NRI 1945 dapat diubah kapan saja untuk menghapus kedudukan Pancasila',
+                    D: 'Pancasila bersifat fleksibel tanpa terikat aturan konstitusi tertulis'
+                },
+                correct: 'A'
+            },
+            {
+                id: 3, type: 'mc',
+                question: 'Ketika terjadi perdebatan hukum dalam sidang legislatif mengenai rancangan undang-undang perlindungan minoritas, para wakil rakyat merujuk pada semangat Bhinneka Tunggal Ika. Makna semboyan ini dalam kaitannya dengan keutuhan NKRI adalah...',
+                options: {
+                    A: 'Meskipun berbeda-beda suku, agama, dan ras, bangsa Indonesia tetap satu rumpun dalam NKRI',
+                    B: 'Perbedaan budaya harus diseragamkan demi tercapainya stabilitas nasional',
+                    C: 'Setiap daerah berhak memisahkan diri jika merasa tidak cocok dengan kebijakan pusat',
+                    D: 'Semboyan budaya daerah lebih tinggi kedudukannya daripada konstitusi negara'
+                },
+                correct: 'A'
+            },
+            {
+                id: 4, type: 'mc',
+                question: 'Pancasila berkedudukan sebagai sumber dari segala sumber hukum negara sebagaimana diatur dalam peraturan perundang-undangan. Konsekuensi logis dari prinsip ini bagi produk hukum daerah adalah...',
+                options: {
+                    A: 'Setiap perda atau kebijakan daerah tidak boleh bertentangan dengan nilai Pancasila dan UUD 1945',
+                    B: 'Pemerintah daerah berhak membuat peraturan yang bertentangan dengan dasar negara',
+                    C: 'Hukum adat lokal lebih utama dibandingkan konstitusi nasional',
+                    D: 'Pancasila hanya berlaku di ibu kota negara saja'
+                },
+                correct: 'A'
+            },
+            {
+                id: 5, type: 'mc',
+                question: 'Siswa kelas 9 MTs Mu\'allimin NU melakukan studi wisata ke museum perjuangan nasional dan mendiskusikan bagaimana para pendiri bangsa merajut persatuan di tengah keragaman. Semboyan Bhinneka Tunggal Ika yang tercantum dalam lambang negara Garuda Pancasila berasal dari kitab...',
+                options: {
+                    A: 'Kitab Sutasoma karya Mpu Tantular',
+                    B: 'Kitab Negarakertagama karya Mpu Prapanca',
+                    C: 'Kitab Pararaton dan Kidung Sunda',
+                    D: 'Kitab Arjuna Wiwaha karya Mpu Kanwa'
+                },
+                correct: 'A'
+            },
+            {
+                id: 6, type: 'mc',
+                question: 'Bentuk negara Indonesia adalah kesatuan, bukan serikat. Hal ini secara tegas melindungi keutuhan wilayah dari Sabang sampai Merauke. Pasal dalam UUD NRI Tahun 1945 yang menegaskan bahwa "Negara Indonesia ialah Negara Kesatuan, yang berbentuk Republik" adalah...',
+                options: {
+                    A: 'Pasal 1 ayat (1)',
+                    B: 'Pasal 2 ayat (1)',
+                    C: 'Pasal 3 ayat (3)',
+                    D: 'Pasal 6A ayat (1)'
+                },
+                correct: 'A'
+            },
+            {
+                id: 7, type: 'mc',
+                question: 'Dalam kehidupan bermasyarakat, seringkali muncul paham fanatisme sempit yang menganggap kelompoknya paling benar. Sikap yang sesuai dengan nilai sila keempat Pancasila untuk meredam konflik tersebut adalah...',
+                options: {
+                    A: 'Mengutamakan musyawarah mufakat dan menghargai pendapat kelompok lain',
+                    B: 'Memaksakan kehendak mayoritas kepada minoritas tanpa kompromi',
+                    C: 'Melakukan aksi protes radikal di jalanan umum',
+                    D: 'Menutup diri dari pergaulan antar golongan masyarakat'
+                },
+                correct: 'A'
+            },
+            {
+                id: 8, type: 'mc',
+                question: 'Hubungan timbal balik antara Pembukaan UUD NRI Tahun 1945 alinea keempat dengan Batang Tubuh UUD 1945 terletak pada pencantuman...',
+                options: {
+                    A: 'Pancasila sebagai dasar negara yang dijabarkan dalam pasal-pasal konstitusi',
+                    B: 'Teks proklamasi kemerdekaan yang dibacakan Soekarno-Hatta',
+                    C: 'Sistem pertahanan keamanan rakyat semesta',
+                    D: 'Daftar nama menteri kabinet pertama Republik Indonesia'
+                },
+                correct: 'A'
+            },
+            {
+                id: 9, type: 'mc',
+                question: 'Kedaulatan berada di tangan rakyat dan dilaksanakan menurut Undang-Undang Dasar. Prinsip demokrasi Pancasila menjamin bahwa setiap warga negara memiliki hak untuk...',
+                options: {
+                    A: 'Menyalurkan aspirasi politik secara bertanggung jawab serta ikut serta dalam pemilu',
+                    B: 'Membuat hukum sendiri tanpa persetujuan DPR',
+                    C: 'Menolak membayar pajak jika tidak setuju dengan kebijakan pemerintah',
+                    D: 'Membentuk pemerintahan tandingan di daerah otonom'
+                },
+                correct: 'A'
+            },
+            {
+                id: 10, type: 'mc',
+                question: 'Integrasi nasional dalam bingkai NKRI sangat bergantung pada komitmen warga negara dalam mengamalkan nilai-nilai Pancasila. Ancaman nyata terhadap disintegrasi bangsa dewasa ini adalah...',
+                options: {
+                    A: 'Maraknya berita bohong (hoaks), ujaran kebencian, dan adu domba suku/agama',
+                    B: 'Kerjasama ekonomi internasional antar negara sahabat',
+                    C: 'Peningkatan prestasi siswa di ajang olimpiade sains',
+                    D: 'Pertukaran budaya pelajar antar provinsi di Indonesia'
+                },
+                correct: 'A'
+            },
+            {
+                id: 11, type: 'mc',
+                question: 'Pancasila berkedudukan sebagai ideologi terbuka. Artinya, nilai-nilai dasar Pancasila dapat dikembangkan sesuai dengan dinamika zaman tanpa harus mengubah...',
+                options: {
+                    A: 'Nilai dasar dan hakikat rohaniah yang terkandung di dalamnya',
+                    B: 'Seluruh undang-undang organik setiap lima tahun sekali',
+                    C: 'Bentuk negara kesatuan menjadi republik federal',
+                    D: 'Semboyan negara dari Bhinneka Tunggal Ika menjadi bahasa persatuan'
+                },
+                correct: 'A'
+            },
+            {
+                id: 12, type: 'mc',
+                question: 'Warga negara Indonesia wajib membela negara dari segala bentuk ancaman. Hal ini diatur dalam UUD NRI Tahun 1945 Pasal 27 ayat (3). Wujud nyata bela negara bagi pelajar di madrasah adalah...',
+                options: {
+                    A: 'Belajar dengan tekun, menjaga disiplin, dan mencintai produk dalam negeri',
+                    B: 'Mengangkat senjata melawan negara tetangga di perbatasan',
+                    C: 'Melakukan unjuk rasa menolak peraturan sekolah setiap hari',
+                    D: 'Mengabaikan kewajiban upacara bendera hari senin'
+                },
+                correct: 'A'
+            },
+            {
+                id: 13, type: 'mc',
+                question: 'Hubungan antara sila pertama "Ketuhanan Yang Maha Esa" dengan sila kedua "Kemanusiaan yang Adil dan Beradab" dalam praktik kehidupan bernegara adalah...',
+                options: {
+                    A: 'Keimanan kepada Tuhan memotivasi seseorang untuk memperlakukan sesama manusia dengan adil dan bermartabat',
+                    B: 'Kebebasan beragama membolehkan warga negara mengabaikan norma kesusilaan',
+                    C: 'Negara berhak mencampurkan urusan akidah seluruh umat beragama',
+                    D: 'Nilai kemanusiaan lebih tinggi daripada ajaran agama manapun'
+                },
+                correct: 'A'
+            },
+            {
+                id: 14, type: 'mc',
+                question: 'Keberagaman suku dan budaya di Indonesia merupakan kekayaan bangsa yang harus dijaga melalui implementasi konsep...',
+                options: {
+                    A: 'Bhinneka Tunggal Ika dalam kerangka NKRI yang berlandaskan Pancasila',
+                    B: 'Asimilasi total sehingga seluruh suku melebur menjadi satu suku bangsa',
+                    C: 'Pemisahan wilayah administratif berdasarkan mayoritas agama',
+                    D: 'Dominasi budaya tertentu atas suku bangsa minoritas'
+                },
+                correct: 'A'
+            },
+            {
+                id: 15, type: 'mc',
+                question: 'Peraturan perundang-undangan tertinggi di Indonesia yang menjadi dasar hukum pembentukan seluruh peraturan di bawahnya adalah...',
+                options: {
+                    A: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945',
+                    B: 'Ketetapan Majelis Permusyawaratan Rakyat (Tap MPR)',
+                    C: 'Keputusan Presiden dan Peraturan Menteri',
+                    D: 'Peraturan Daerah Provinsi dan Kabupaten'
+                },
+                correct: 'A'
+            },
+
+            // --- 10 PILIHAN GANDA KOMPLEKS (16-25) [Jawaban benar lebih dari satu] ---
+            {
+                id: 16, type: 'complex',
+                question: 'Pilihlah DUA (2) pernyataan yang menunjukkan hubungan erat antara Pancasila dan Pembukaan UUD NRI Tahun 1945:',
+                options: {
+                    A: 'Pancasila tercantum secara resmi di dalam Pembukaan UUD 1945 alinea keempat',
+                    B: 'Pembukaan UUD 1945 dapat diubah kapan saja oleh presiden yang berkuasa',
+                    C: 'Pancasila merupakan jiwa dan sumber hukum tertib hukum Indonesia yang bersumber dari Pembukaan',
+                    D: 'Kedudukan Pembukaan UUD 1945 terpisah dari sistem hukum nasional'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 17, type: 'complex',
+                question: 'Pilihlah DUA (2) wujud pengamalan nilai Bhinneka Tunggal Ika dalam kehidupan sehari-hari di madrasah:',
+                    options: {
+                    A: 'Berteman akrab dengan teman dari berbagai daerah tanpa memandang suku',
+                    B: 'Hanya mau bergaul dengan kelompok suku atau daerah asal yang sama',
+                    C: 'Menghormati perayaan hari besar keagamaan teman yang berbeda keyakinan',
+                    D: 'Mengolok-olok logat bicara atau tradisi teman dari luar daerah'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 18, type: 'complex',
+                question: 'Pilihlah DUA (2) prinsip utama dalam negara kesatuan Republik Indonesia (NKRI):',
+                options: {
+                    A: 'Pemerintahan pusat memegang kekuasaan tertinggi atas seluruh wilayah negara',
+                    B: 'Setiap provinsi berhak mencetak mata uang sendiri yang sah',
+                    C: 'Undang-undang Dasar berlaku bagi seluruh rakyat Indonesia tanpa terkecuali',
+                    D: 'Daerah otonom tidak terikat sama sekali oleh hukum nasional'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 19, type: 'complex',
+                question: 'Pilihlah DUA (2) fungsi utama Pancasila bagi bangsa dan negara Indonesia:',
+                options: {
+                    A: 'Sebagai dasar negara dan pandangan hidup bangsa (way of life)',
+                    B: 'Sebagai alat untuk memecah belah persatuan antar golongan',
+                    C: 'Sebagai sumber dari segala sumber hukum negara',
+                    D: 'Sebagai ideologi tertutup yang kaku dan anti perubahan'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 20, type: 'complex',
+                question: 'Pilihlah DUA (2) bentuk ancaman yang dapat merusak keutuhan NKRI:',
+                options: {
+                    A: 'Pemberontakan bersenjata yang ingin mengganti ideologi Pancasila',
+                    B: 'Kerjasama perdagangan bilateral yang saling menguntungkan',
+                    C: 'Konflik horizontal antar suku atau agama yang disulut provokasi',
+                    D: 'Kegiatan pertukaran pemuda antar negara ASEAN'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 21, type: 'complex',
+                question: 'Pilihlah DUA (2) makna penting dari semboyan Bhinneka Tunggal Ika:',
+                options: {
+                    A: 'Mengakui dan merayakan keragaman budaya sebagai kekayaan bangsa',
+                    B: 'Menghapuskan seluruh adat istiadat daerah demi keseragaman nasional',
+                    C: 'Mendorong semangat persatuan dan kesatuan di tengah perbedaan',
+                    D: 'Menjadikan satu suku bangsa sebagai penguasa mutlak atas suku lainnya'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 22, type: 'complex',
+                question: 'Pilihlah DUA (2) ketentuan konstitusional dalam UUD NRI 1945 mengenai bentuk dan kedaulatan negara:',
+                options: {
+                    A: 'Negara Indonesia ialah Negara Kesatuan, yang berbentuk Republik (Pasal 1 ayat 1)',
+                    B: 'Kedaulatan berada di tangan majelis tertinggi tanpa batas',
+                    C: 'Kedaulatan berada di tangan rakyat dan dilaksanakan menurut Undang-Undang Dasar (Pasal 1 ayat 2)',
+                    D: 'Presiden memiliki kekuasaan mutlak tanpa pengawasan DPR'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 23, type: 'complex',
+                question: 'Pilihlah DUA (2) sikap yang mencerminkan semangat bela negara di lingkungan masyarakat:',
+                options: {
+                    A: 'Aktif mengikuti kegiatan siskamling dan kerja bakti membersihkan lingkungan',
+                    B: 'Acuh tak acuh terhadap keamanan lingkungan sekitar rumah',
+                    C: 'Menaati hukum dan peraturan lalu lintas yang berlaku di jalan raya',
+                    D: 'Melakukan perusakan fasilitas umum saat terjadi ketidakpuasan'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 24, type: 'complex',
+                question: 'Pilihlah DUA (2) karakteristik hubungan antara Pancasila dan UUD NRI Tahun 1945:',
+                options: {
+                    A: 'Pancasila merupakan substansi esensial yang diatur dalam batang tubuh konstitusi',
+                    B: 'UUD 1945 tidak memiliki kaitan filosofis dengan dasar negara',
+                    C: 'Pancasila memberikan landasan moral dan etika dalam penegakan hukum konstitusi',
+                    D: 'Pasal-pasal UUD 1945 boleh bertentangan dengan nilai ketuhanan'
+                },
+                correct: ['A', 'C']
+            },
+            {
+                id: 25, type: 'complex',
+                question: 'Pilihlah DUA (2) manfaat mempelajari hubungan Pancasila dengan NKRI bagi pelajar kelas 9:',
+                options: {
+                    A: 'Memperkuat kesadaran berbangsa dan bernegara serta kecintaan pada tanah air',
+                    B: 'Mendorong sikap chauvinisme yang merendahkan bangsa lain',
+                    C: 'Menumbuhkan sikap toleransi dan tanggung jawab sebagai warga negara yang baik',
+                    D: 'Mengajarkan cara memecah belah kerukunan antar umat beragama'
+                },
+                correct: ['A', 'C']
+            },
+
+            // --- 10 SOAL MENJODOHKAN (26-35) ---
+            {
+                id: 26, type: 'matching',
+                question: 'Jodohkan konsep dasar kenegaraan dengan penjelasan yang tepat!',
+                pairs: [
+                    { premise: 'Pancasila', match: 'Dasar negara dan ideologi nasional bangsa Indonesia' },
+                    { premise: 'UUD NRI 1945', match: 'Konstitusi tertulis dan hukum dasar tertingginya negara' },
+                    { premise: 'Bhinneka Tunggal Ika', match: 'Semboyan pemersatu bangsa di tengah keragaman' },
+                    { premise: 'NKRI', match: 'Bentuk negara kesatuan yang berdaulat dan republik' },
+                    { premise: 'Pembukaan Alinea IV', match: 'Tempat tercantumnya rumusan resmi dasar negara Pancasila' }
+                ]
+            },
+            {
+                id: 27, type: 'matching',
+                question: 'Jodohkan pasal dalam UUD NRI 1945 dengan substansi materinya!',
+                pairs: [
+                    { premise: 'Pasal 1 ayat (1)', match: 'Negara Indonesia ialah Negara Kesatuan, yang berbentuk Republik' },
+                    { premise: 'Pasal 1 ayat (2)', match: 'Kedaulatan berada di tangan rakyat dan dilaksanakan menurut UUD' },
+                    { premise: 'Pasal 27 ayat (3)', match: 'Setiap warga negara berhak dan wajib ikut serta dalam upaya bela negara' },
+                    { premise: 'Pasal 29 ayat (1)', match: 'Negara berdasar atas Ketuhanan Yang Maha Esa' },
+                    { premise: 'Pasal 30 ayat (1)', match: 'Tiap-tiap warga negara berhak dan wajib ikut serta dalam pertahanan keamanan' }
+                ]
+            },
+            {
+                id: 28, type: 'matching',
+                question: 'Jodohkan nilai sila Pancasila dengan wujud pengamalannya!',
+                pairs: [
+                    { premise: 'Sila Pertama', match: 'Menghormati kebebasan beribadah sesuai agama masing-masing' },
+                    { premise: 'Sila Kedua', match: 'Mengembangkan sikap saling mencintai sesama manusia' },
+                    { premise: 'Sila Ketiga', match: 'Menempatkan persatuan dan kesatuan di atas kepentingan pribadi' },
+                    { premise: 'Sila Keempat', match: 'Mengutamakan musyawarah mufakat dalam mengambil keputusan' },
+                    { premise: 'Sila Kelima', match: 'Mengembangkan perbuatan luhur yang mencerminkan sikap keadilan' }
+                ]
+            },
+            {
+                id: 29, type: 'matching',
+                question: 'Jodohkan jenis ancaman terhadap NKRI dengan contohnya!',
+                pairs: [
+                    { premise: 'Ancaman Militer', match: 'Agresi militer, spionase, dan sabotase kedaulatan' },
+                    { premise: 'Ancaman Non-Militer', match: 'Pengaruh budaya asing negatif, korupsi, dan radikalisme' },
+                    { premise: 'Disintegrasi Bangsa', match: 'Gerakan separatis bersenjata yang ingin melepaskan diri' },
+                    { premise: 'Konflik Horizontal', match: 'Bentrok antar kelompok masyarakat akibat provokasi sara' },
+                    { premise: 'Ancaman Siber', match: 'Pencurian data strategis negara dan serangan disinformasi' }
+                ]
+            },
+            {
+                id: 30, type: 'matching',
+                question: 'Jodohkan istilah hukum dan kenegaraan dengan definisinya!',
+                pairs: [
+                    { premise: 'Ideologi Terbuka', match: 'Ideologi yang nilai dasarnya dapat dikembangkan dinamis' },
+                    { premise: 'Konstitusi', match: 'Hukum dasar tertulis dan tidak tertulis penyelenggaraan negara' },
+                    { premise: 'Integrasi Nasional', match: 'Penyatuan berbagai kelompok budaya dalam kesatuan nasional' },
+                    { premise: 'Bela Negara', match: 'Tekad dan sikap warga negara menjaga kedaulatan negara' },
+                    { premise: 'Otonomi Daerah', match: 'Hak wewenang daerah otonom mengatur rumah tangganya sendiri' }
+                ]
+            },
+            {
+                id: 31, type: 'matching',
+                question: 'Jodohkan hubungan Pancasila dan UUD 1945 dengan aspeknya!',
+                pairs: [
+                    { premise: 'Aspek Filosofis', match: 'Pancasila sebagai jiwa dan pandangan hidup bangsa di konstitusi' },
+                    { premise: 'Aspek Yuridis', match: 'Pancasila sebagai sumber dari segala sumber hukum negara' },
+                    { premise: 'Aspek Historis', match: 'Pancasila lahir dari perumusan BPUPKI dan PPKI' },
+                    { premise: 'Aspek Politis', match: 'Pancasila sebagai dasar pembentukan sistem pemerintahan NKRI' },
+                    { premise: 'Aspek Operasional', match: 'Pasal-pasal UUD 1945 menjabarkan nilai luhur Pancasila' }
+                ]
+            },
+            {
+                id: 32, type: 'matching',
+                question: 'Jodohkan tokoh atau unsur sejarah dengan peran utamanya!',
+                pairs: [
+                    { premise: 'Mpu Tantular', match: 'Pengarang Kitab Sutasoma pencetus semboyan Bhinneka Tunggal Ika' },
+                    { premise: 'Soekarno', match: 'Penggali lahirnya Pancasila pada sidang BPUPKI 1 Juni 1945' },
+                    { premise: 'Mohammad Hatta', match: 'Wakil presiden proklamator dan tokoh pemersatu bangsa' },
+                    { premise: 'PPKI', match: 'Panitia pengesahan UUD 1945 dan penetapan Pancasila dasar negara' },
+                    { premise: 'BPUPKI', match: 'Badan penyelidik usaha persiapan kemerdekaan Indonesia' }
+                ]
+            },
+            {
+                id: 33, type: 'matching',
+                question: 'Jodohkan sikap warga negara dengan nilai persatuan NKRI!',
+                pairs: [
+                    { premise: 'Toleransi Beragama', match: 'Menjaga kerukunan antar umat beragama di lingkungan madrasah' },
+                    { premise: 'Cinta Tanah Air', match: 'Bangga menggunakan produk buatan dalam negeri' },
+                    { premise: 'Gotong Royong', match: 'Bekerja sama membersihkan fasilitas umum desa' },
+                    { premise: 'Patuh Hukum', match: 'Mentaati tata tertib madrasah dan perundang-undangan' },
+                    { premise: 'Musyawarah', match: 'Menyelesaikan mufakat kelas dengan kepala dingin' }
+                ]
+            },
+            {
+                id: 34, type: 'matching',
+                question: 'Jodohkan fungsi Pembukaan UUD NRI 1945 dengan alinea yang sesuai!',
+                pairs: [
+                    { premise: 'Alinea Pertama', match: 'Hak kemerdekaan adalah hak segala bangsa dan penjajahan harus dihapuskan' },
+                    { premise: 'Alinea Kedua', match: 'Perjuangan pergerakan kemerdekaan telah mengantarkan rakyat ke depan pintu gerbang' },
+                    { premise: 'Alinea Ketiga', match: 'Pernyataan kemerdekaan atas berkat rahmat Allah Yang Maha Kuasa' },
+                    { premise: 'Alinea Keempat', match: 'Tujuan negara dan rumusan dasar negara Pancasila tercantum di sini' },
+                    { premise: 'Batang Tubuh UUD', match: 'Pasal-pasal operasional penjabaran Pembukaan UUD 1945' }
+                ]
+            },
+            {
+                id: 35, type: 'matching',
+                question: 'Jodohkan bentuk partisipasi pelajar dalam menjaga keutuhan NKRI!',
+                pairs: [
+                    { premise: 'Belajar Sungguh-sungguh', match: 'Mempersiapkan diri menjadi generasi cerdas penerus bangsa' },
+                    { premise: 'Menjaga Nama Baik', match: 'Mengharumkan nama madrasah melalui prestasi akademik dan non-akademik' },
+                    { premise: 'Menghindari Tawuran', match: 'Menolak segala bentuk kekerasan antar pelajar di luar madrasah' },
+                    { premise: 'Bijak Bermedsos', match: 'Tidak menyebarkan hoaks atau ujaran kebencian di internet' },
+                    { premise: 'Ikut Upacara', match: 'Khidmat mengikuti upacara hari besar nasional dengan disiplin' }
+                ]
+            }
+        ];
+
+        // Load Configuration & Data State
+        let appConfig = JSON.parse(localStorage.getItem('muallimin_pkn9_config_v1')) || {
+            subject: 'Pendidikan Pancasila (PKn)',
+            grade: '9 (Sembilan) MTs',
+            teacher: 'Lil Muauwanah',
+            kkm: 80,
+            durationMinutes: 90,
+            logoText: 'MTs MU\'ALLIMIN NU',
+            adminCreds: DEFAULT_ADMIN
+        };
+
+        let questions = JSON.parse(localStorage.getItem('muallimin_pkn9_questions_v1')) || DEFAULT_QUESTIONS;
+        let studentSubmissions = JSON.parse(localStorage.getItem('muallimin_pkn9_submissions_v1')) || [];
+        
+        let currentUser = null; 
+        let currentView = 'login'; // 'login', 'exam', 'result', 'admin'
+        let examState = {
+            answers: {},
+            timeLeft: appConfig.durationMinutes * 60,
+            timerInterval: null,
+            isSubmitted: false
+        };
+
+        function showModal(title, message, type = 'info', buttons = []) {
+            const modal = document.getElementById('customModal');
+            const container = document.getElementById('modalContainer');
+            const iconEl = document.getElementById('modalIcon');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            const btnContainer = document.getElementById('modalButtons');
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+            btnContainer.innerHTML = '';
+
+            iconEl.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl ";
+            if (type === 'success') {
+                iconEl.classList.add('bg-emerald-100', 'text-emerald-600');
+                iconEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else if (type === 'error') {
+                iconEl.classList.add('bg-rose-100', 'text-rose-600');
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else if (type === 'warning') {
+                iconEl.classList.add('bg-amber-100', 'text-amber-600');
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            } else {
+                iconEl.classList.add('bg-cyan-100', 'text-cyan-600');
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+            }
+
+            if (buttons.length === 0) {
+                buttons = [{
+                    text: 'Tutup',
+                    class: 'bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium w-full shadow-lg shadow-emerald-600/20 transition-all',
+                    onClick: () => closeModal()
+                }];
+            }
+
+            buttons.forEach(btn => {
+                const b = document.createElement('button');
+                b.textContent = btn.text;
+                b.className = btn.class || 'bg-slate-200 hover:bg-slate-300 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all';
+                b.onclick = () => {
+                    if (btn.onClick) btn.onClick();
+                    closeModal();
+                };
+                btnContainer.appendChild(b);
+            });
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('scale-95', 'opacity-0');
+                container.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('customModal');
+            const container = document.getElementById('modalContainer');
+            container.classList.remove('scale-100', 'opacity-100');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 150);
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = '';
+
+            if (currentView === 'login') {
+                app.innerHTML = renderLoginView();
+            } else if (currentView === 'exam') {
+                app.innerHTML = renderExamView();
+            } else if (currentView === 'result') {
+                app.innerHTML = renderResultView();
+            } else if (currentView === 'admin') {
+                app.innerHTML = renderAdminView();
+            }
+        }
+
+        function renderLoginView() {
+            return `
+            <div class="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900">
+                <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl max-w-md w-full p-8 border border-white/25">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-indigo-600/30 mb-4">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-slate-900">ASESMEN SUMATIF</h1>
+                        <p class="text-indigo-700 font-semibold mt-1">${appConfig.subject}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">${appConfig.logoText} • Kelas ${appConfig.grade}</p>
+                    </div>
+
+                    <!-- Role Tabs -->
+                    <div class="flex rounded-xl bg-slate-100 p-1 mb-6">
+                        <button id="tabStudent" onclick="switchLoginTab('student')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm">
+                            <i class="fa-solid fa-user-graduate mr-2"></i>Siswa
+                        </button>
+                        <button id="tabAdmin" onclick="switchLoginTab('admin')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+                            <i class="fa-solid fa-user-shield mr-2"></i>Admin / Guru
+                        </button>
+                    </div>
+
+                    <!-- Student Login Form -->
+                    <div id="studentForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nama Lengkap Siswa (Username)</label>
+                            <input type="text" id="studentName" placeholder="Contoh: Ahmad Fauzan" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Kelas</label>
+                            <select id="studentClass" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white transition-all">
+                                <option value="9A">Kelas 9A</option>
+                                <option value="9B">Kelas 9B</option>
+                                <option value="9C">Kelas 9C</option>
+                                <option value="9D">Kelas 9D</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nomor Presensi (Password)</label>
+                            <input type="number" id="studentNumber" placeholder="Contoh: 15" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                            <p class="text-xs text-slate-400 mt-1">Nomor presensi digunakan sebagai kata sandi ujian. Maksimal 2 kali pengerjaan.</p>
+                        </div>
+                        <button onclick="handleStudentLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2">
+                            <span>Mulai Asesmen</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Admin Login Form -->
+                    <div id="adminForm" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Username Admin</label>
+                            <input type="text" id="adminUser" placeholder="Username" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Password Admin</label>
+                            <input type="password" id="adminPass" placeholder="Password" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                            <p class="text-xs text-slate-400 mt-1">Standar awal: adminmuallimin / 123</p>
+                        </div>
+                        <button onclick="handleAdminLogin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-slate-900/20 transition-all flex items-center justify-center space-x-2">
+                            <span>Masuk Dashboard Admin</span>
+                            <i class="fa-solid fa-lock-open"></i>
+                        </button>
+                    </div>
+
+                    <div class="mt-8 text-center text-xs text-slate-400 border-t border-slate-100 pt-4">
+                        Penyusun: ${appConfig.teacher} • ${appConfig.logoText}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function switchLoginTab(tab) {
+            const tabStudent = document.getElementById('tabStudent');
+            const tabAdmin = document.getElementById('tabAdmin');
+            const studentForm = document.getElementById('studentForm');
+            const adminForm = document.getElementById('adminForm');
+
+            if (tab === 'student') {
+                tabStudent.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-700 shadow-sm";
+                tabAdmin.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900";
+                studentForm.classList.remove('hidden');
+                adminForm.classList.add('hidden');
+            } else {
+                tabAdmin.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-white text-slate-900 shadow-sm";
+                tabStudent.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900";
+                adminForm.classList.remove('hidden');
+                studentForm.classList.add('hidden');
+            }
+        }
+
+        function handleStudentLogin() {
+            const name = document.getElementById('studentName').value.trim();
+            const className = document.getElementById('studentClass').value;
+            const number = document.getElementById('studentNumber').value.trim();
+
+            if (!name || !number) {
+                showModal('Peringatan', 'Harap isi Nama Lengkap dan Nomor Presensi dengan benar!', 'warning');
+                return;
+            }
+
+            const studentId = `${name}_${className}_${number}`.toLowerCase();
+            const pastSubmissions = studentSubmissions.filter(s => s.studentId === studentId);
+            
+            if (pastSubmissions.length >= 2) {
+                showModal('Batas Pengerjaan Habis', `Maaf, ${name} (No. Presensi ${number}) telah menggunakan kesempatan mengerjakan sebanyak 2 kali.`, 'error');
+                return;
+            }
+
+            currentUser = {
+                role: 'student',
+                name: name,
+                className: className,
+                number: number,
+                studentId: studentId,
+                attemptCount: pastSubmissions.length + 1
+            };
+
+            examState = {
+                answers: {},
+                timeLeft: appConfig.durationMinutes * 60,
+                timerInterval: null,
+                isSubmitted: false
+            };
+
+            currentView = 'exam';
+            render();
+            startExamTimer();
+        }
+
+        function handleAdminLogin() {
+            const user = document.getElementById('adminUser').value.trim();
+            const pass = document.getElementById('adminPass').value;
+
+            if (user === appConfig.adminCreds.username && pass === appConfig.adminCreds.password) {
+                currentUser = { role: 'admin', name: 'Administrator / Guru' };
+                currentView = 'admin';
+                render();
+            } else {
+                showModal('Login Gagal', 'Username atau Password admin salah!', 'error');
+            }
+        }
+
+        let currentQuestionIndex = 0;
+
+        function renderExamView() {
+            const q = questions[currentQuestionIndex];
+            const totalQ = questions.length;
+            const answeredCount = Object.keys(examState.answers).length;
+
+            return `
+            <div class="flex-grow flex flex-col bg-slate-100">
+                <!-- Top Navbar -->
+                <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-sm md:text-base">${appConfig.subject} (${appConfig.logoText})</h2>
+                            <p class="text-xs text-slate-500">Siswa: <span class="font-semibold text-slate-700">${currentUser.name}</span> (${currentUser.className} - No. ${currentUser.number}) • Percobaan ke-${currentUser.attemptCount}/2</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-xl flex items-center space-x-2 shadow-inner">
+                            <i class="fa-regular fa-clock text-amber-600"></i>
+                            <span id="timerDisplay" class="font-mono font-bold text-sm md:text-base">00:00:00</span>
+                        </div>
+                        ${currentUser.isTestMode ? `<button onclick="exitTestMode()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow">Keluar Uji Coba</button>` : ''}
+                    </div>
+                </header>
+
+                <!-- Main Content Area -->
+                <div class="max-w-6xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 flex-grow">
+                    <!-- Left: Question Card -->
+                    <div class="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-bold uppercase tracking-wider">
+                                    Soal No. ${currentQuestionIndex + 1} dari ${totalQ} (${q.type === 'mc' ? 'Pilihan Ganda' : q.type === 'complex' ? 'Pilihan Ganda Kompleks' : 'Menjodohkan'})
+                                </span>
+                                <span class="text-xs text-slate-400 font-medium">Terjawab: ${answeredCount}/${totalQ}</span>
+                            </div>
+
+                            <div class="text-slate-900 font-medium text-base md:text-lg mb-6 leading-relaxed">
+                                ${q.question}
+                            </div>
+
+                            <!-- Options Rendering -->
+                            <div id="questionOptionsContainer" class="space-y-3">
+                                ${renderQuestionOptions(q)}
+                            </div>
+                        </div>
+
+                        <!-- Navigation Footer -->
+                        <div class="flex items-center justify-between pt-6 mt-8 border-t border-slate-100">
+                            <button onclick="prevQuestion()" ${currentQuestionIndex === 0 ? 'disabled' : ''} class="px-5 py-2.5 rounded-xl border border-slate-300 font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center space-x-2">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                <span>Sebelumnya</span>
+                            </button>
+                            
+                            ${currentQuestionIndex === totalQ - 1 ? 
+                                `<button onclick="confirmSubmitExam()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center space-x-2">
+                                    <span>Selesaikan Asesmen</span>
+                                    <i class="fa-solid fa-check"></i>
+                                 </button>` :
+                                `<button onclick="nextQuestion()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center space-x-2">
+                                    <span>Selanjutnya</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                 </button>`
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Right: Question Palette / Navigator -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col">
+                        <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center justify-between">
+                            <span>Daftar Soal</span>
+                            <span class="text-xs font-normal text-slate-500">Klik untuk lompat</span>
+                        </h3>
+                        <div class="grid grid-cols-5 gap-2 overflow-y-auto max-h-[380px] custom-scrollbar p-1">
+                            ${questions.map((item, idx) => {
+                                const isAnswered = examState.answers[item.id] !== undefined && 
+                                    (Array.isArray(examState.answers[item.id]) ? examState.answers[item.id].length > 0 : 
+                                    typeof examState.answers[item.id] === 'object' ? Object.keys(examState.answers[item.id]).length > 0 : 
+                                    examState.answers[item.id] !== '');
+                                const isCurrent = currentQuestionIndex === idx;
+                                
+                                let btnClass = "h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center border ";
+                                if (isCurrent) {
+                                    btnClass += "border-indigo-600 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500/20";
+                                } else if (isAnswered) {
+                                    btnClass += "bg-indigo-600 text-white border-indigo-600 shadow-sm";
+                                } else {
+                                    btnClass += "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200";
+                                }
+
+                                return `<button onclick="jumpToQuestion(${idx})" class="${btnClass}">${idx + 1}</button>`;
+                            }).join('')}
+                        </div>
+
+                        <div class="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1.5">
+                            <div class="flex items-center space-x-2"><span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span><span>Sudah dijawab</span></div>
+                            <div class="flex items-center space-x-2"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span><span>Belum dijawab</span></div>
+                        </div>
+
+                        <button onclick="confirmSubmitExam()" class="mt-4 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-all shadow">
+                            Kirim Jawaban Sekarang
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderQuestionOptions(q) {
+            const currentAns = examState.answers[q.id];
+
+            if (q.type === 'mc') {
+                return Object.entries(q.options).map(([key, text]) => {
+                    const isChecked = currentAns === key;
+                    return `
+                    <label onclick="saveAnswer(${q.id}, '${key}')" class="flex items-start space-x-3 p-4 rounded-xl border ${isChecked ? 'border-indigo-600 bg-indigo-50/60 ring-1 ring-indigo-600' : 'border-slate-200 hover:bg-slate-50'} cursor-pointer transition-all">
+                        <input type="radio" name="q_${q.id}" value="${key}" ${isChecked ? 'checked' : ''} class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                        <div class="flex-grow text-sm"><span class="font-bold mr-2 text-slate-700">${key}.</span>${text}</div>
+                    </label>
+                    `;
+                }).join('');
+            } else if (q.type === 'complex') {
+                const selectedList = Array.isArray(currentAns) ? currentAns : [];
+                return Object.entries(q.options).map(([key, text]) => {
+                    const isChecked = selectedList.includes(key);
+                    return `
+                    <label onclick="toggleComplexAnswer(${q.id}, '${key}')" class="flex items-start space-x-3 p-4 rounded-xl border ${isChecked ? 'border-indigo-600 bg-indigo-50/60 ring-1 ring-indigo-600' : 'border-slate-200 hover:bg-slate-50'} cursor-pointer transition-all">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} class="mt-1 rounded text-indigo-600 focus:ring-indigo-500">
+                        <div class="flex-grow text-sm"><span class="font-bold mr-2 text-slate-700">${key}.</span>${text}</div>
+                    </label>
+                    `;
+                }).join('');
+            } else if (q.type === 'matching') {
+                const userPairAns = (typeof currentAns === 'object' && currentAns !== null) ? currentAns : {};
+                const allMatches = q.pairs.map(p => p.match);
+
+                return q.pairs.map((pairItem, pIdx) => {
+                    const selectedMatch = userPairAns[pIdx] || '';
+                    return `
+                    <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                        <div class="text-sm font-semibold text-slate-800"><span class="text-indigo-700 mr-2">${pIdx + 1}.</span>${pairItem.premise}</div>
+                        <select onchange="saveMatchingAnswer(${q.id}, ${pIdx}, this.value)" class="w-full p-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="">-- Pilih Pasangan Jawaban --</option>
+                            ${allMatches.map(m => `<option value="${m}" ${selectedMatch === m ? 'selected' : ''}>${m}</option>`).join('')}
+                        </select>
+                    </div>
+                    `;
+                }).join('');
+            }
+            return '';
+        }
+
+        function saveAnswer(qId, val) {
+            examState.answers[qId] = val;
+            render();
+        }
+
+        function toggleComplexAnswer(qId, key) {
+            let current = examState.answers[qId];
+            if (!Array.isArray(current)) current = [];
+            
+            if (current.includes(key)) {
+                current = current.filter(item => item !== key);
+            } else {
+                current.push(key);
+            }
+            examState.answers[qId] = current;
+            render();
+        }
+
+        function saveMatchingAnswer(qId, pairIdx, val) {
+            if (typeof examState.answers[qId] !== 'object' || examState.answers[qId] === null) {
+                examState.answers[qId] = {};
+            }
+            examState.answers[qId][pairIdx] = val;
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                render();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                render();
+            }
+        }
+
+        function jumpToQuestion(idx) {
+            currentQuestionIndex = idx;
+            render();
+        }
+
+        function startExamTimer() {
+            if (examState.timerInterval) clearInterval(examState.timerInterval);
+            
+            examState.timerInterval = setInterval(() => {
+                examState.timeLeft--;
+                const display = document.getElementById('timerDisplay');
+                if (display) {
+                    const hrs = Math.floor(examState.timeLeft / 3600);
+                    const mins = Math.floor((examState.timeLeft % 3600) / 60);
+                    const secs = examState.timeLeft % 60;
+                    display.textContent = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }
+
+                if (examState.timeLeft <= 0) {
+                    clearInterval(examState.timerInterval);
+                    showModal('Waktu Habis', 'Waktu pengerjaan asesmen telah habis. Sistem akan mengirimkan jawaban Anda secara otomatis.', 'warning', [{
+                        text: 'OK', class: 'bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-medium', onClick: () => submitExam()
+                    }]);
+                }
+            }, 1000);
+        }
+
+        function confirmSubmitExam() {
+            showModal('Konfirmasi Kirim', 'Apakah Anda yakin ingin menyelesaikan dan mengirimkan jawaban asesmen ini? Setelah dikirim, jawaban tidak dapat diubah.', 'warning', [
+                { text: 'Periksa Lagi', class: 'bg-slate-200 hover:bg-slate-300 text-slate-800 px-5 py-2.5 rounded-xl font-medium', onClick: () => {} },
+                { text: 'Ya, Kirim Sekarang', class: 'bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-600/20', onClick: () => submitExam() }
+            ]);
+        }
+
+        function submitExam() {
+            if (examState.timerInterval) clearInterval(examState.timerInterval);
+            examState.isSubmitted = true;
+
+            let totalScore = 0;
+            let correctCount = 0;
+
+            questions.forEach(q => {
+                const userAns = examState.answers[q.id];
+                let isCorrect = false;
+
+                if (q.type === 'mc') {
+                    if (userAns === q.correct) {
+                        isCorrect = true;
+                        totalScore += (100 / 35);
+                    }
+                } else if (q.type === 'complex') {
+                    if (Array.isArray(userAns)) {
+                        const sortedUser = [...userAns].sort();
+                        const sortedCorrect = [...q.correct].sort();
+                        if (JSON.stringify(sortedUser) === JSON.stringify(sortedCorrect)) {
+                            isCorrect = true;
+                            totalScore += (100 / 35);
+                        }
+                    }
+                } else if (q.type === 'matching') {
+                    if (typeof userAns === 'object' && userAns !== null) {
+                        let allPairCorrect = true;
+                        q.pairs.forEach((pair, pIdx) => {
+                            if (userAns[pIdx] !== pair.match) {
+                                allPairCorrect = false;
+                            }
+                        });
+                        if (allPairCorrect) {
+                            isCorrect = true;
+                            totalScore += (100 / 35);
+                        }
+                    }
+                }
+
+                if (isCorrect) correctCount++;
+            });
+
+            const finalScore = Math.min(100, Math.round(totalScore));
+            const status = finalScore >= appConfig.kkm ? 'LULUS (TUNTAS)' : 'BELUM TUNTAS';
+
+            const submissionRecord = {
+                id: 'sub_' + Date.now(),
+                studentId: currentUser.studentId,
+                name: currentUser.name,
+                className: currentUser.className,
+                number: currentUser.number,
+                attempt: currentUser.attemptCount,
+                score: finalScore,
+                correctCount: correctCount,
+                status: status,
+                timestamp: new Date().toLocaleString('id-ID'),
+                answers: examState.answers
+            };
+
+            studentSubmissions.push(submissionRecord);
+            localStorage.setItem('muallimin_pkn9_submissions_v1', JSON.stringify(studentSubmissions));
+
+            currentUser.lastSubmission = submissionRecord;
+            currentView = 'result';
+            render();
+        }
+
+        function exitTestMode() {
+            if (examState.timerInterval) clearInterval(examState.timerInterval);
+            currentView = 'admin';
+            render();
+        }
+
+        function renderResultView() {
+            const sub = currentUser.lastSubmission;
+            const isPassed = sub.score >= appConfig.kkm;
+
+            return `
+            <div class="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950">
+                <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 border border-white/20 text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 right-0 h-3 ${isPassed ? 'bg-indigo-500' : 'bg-amber-500'}"></div>
+                    
+                    <div class="w-20 h-20 ${isPassed ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'} rounded-3xl mx-auto flex items-center justify-center text-3xl font-bold shadow-inner mb-6">
+                        <i class="fa-solid ${isPassed ? 'fa-award' : 'fa-triangle-exclamation'}"></i>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-slate-900 mb-1">Hasil Asesmen Sumatif</h2>
+                    <p class="text-xs text-slate-500 mb-6">${appConfig.subject} • ${appConfig.logoText}</p>
+
+                    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 mb-6 text-left space-y-2">
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">Nama Lengkap:</span><span class="font-bold text-slate-800">${sub.name}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">Kelas / No. Presensi:</span><span class="font-bold text-slate-800">${sub.className} / ${sub.number}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">Percobaan ke-:</span><span class="font-bold text-slate-800">${sub.attempt} dari 2</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">Waktu Kirim:</span><span class="font-bold text-slate-800">${sub.timestamp}</span></div>
+                        <div class="flex justify-between text-sm pt-2 border-t border-slate-200"><span class="text-slate-500">KKM Madrasah:</span><span class="font-bold text-slate-800">${appConfig.kkm}</span></div>
+                    </div>
+
+                    <div class="mb-8">
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nilai Akhir Anda</div>
+                        <div class="text-5xl font-black ${isPassed ? 'text-indigo-600' : 'text-amber-600'}">${sub.score}</div>
+                        <div class="mt-2 inline-block px-4 py-1.5 rounded-full text-xs font-bold ${isPassed ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
+                            ${sub.status}
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button onclick="downloadStudentCertificate()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Download Hasil (TXT)</span>
+                        </button>
+                        <button onclick="logoutToLogin()" class="px-5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-3.5 rounded-xl transition-all text-sm">
+                            Keluar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function downloadStudentCertificate() {
+            const sub = currentUser.lastSubmission;
+            const content = `=========================================
+BUKTI HASIL ASESMEN SUMATIF PENDIDIKAN PANCASILA
+MTs MU'ALLIMIN NU
+Penyusun: Lil Muauwanah
+=========================================
+Mata Pelajaran : ${appConfig.subject}
+Kelas          : ${appConfig.grade}
+-----------------------------------------
+Nama Siswa     : ${sub.name}
+Kelas / No     : ${sub.className} / ${sub.number}
+Percobaan Ke   : ${sub.attempt} / 2
+Waktu Kirim    : ${sub.timestamp}
+-----------------------------------------
+SKOR AKHIR     : ${sub.score}
+KKM            : ${appConfig.kkm}
+STATUS         : ${sub.status}
+=========================================
+Dicetak dari Sistem Asesmen Digital MTs Mu'allimin NU
+`;
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Hasil_Asesmen_PKn_${sub.name.replace(/\s+/g, '_')}_${sub.className}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function logoutToLogin() {
+            currentUser = null;
+            currentView = 'login';
+            render();
+        }
+
+        let adminActiveTab = 'submissions';
+
+        function renderAdminView() {
+            return `
+            <div class="flex-grow flex flex-col bg-slate-100">
+                <!-- Admin Header -->
+                <header class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shadow">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-base">Dashboard Admin / Guru Pengampu</h2>
+                            <p class="text-xs text-slate-400">Penyusun: ${appConfig.teacher} • ${appConfig.logoText}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="testExamAsStudent()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow transition-all flex items-center space-x-2">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Uji Coba Soal (Sebagai Siswa)</span>
+                        </button>
+                        <button onclick="logoutToLogin()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all">
+                            <i class="fa-solid fa-right-from-bracket mr-1"></i>Keluar
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Admin Navigation Tabs -->
+                <div class="bg-white border-b border-slate-200 px-6 flex space-x-6 shadow-sm">
+                    <button onclick="switchAdminTab('submissions')" class="py-4 font-semibold text-sm border-b-2 ${adminActiveTab === 'submissions' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'} transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Rekap Nilai Siswa</span>
+                    </button>
+                    <button onclick="switchAdminTab('questions')" class="py-4 font-semibold text-sm border-b-2 ${adminActiveTab === 'questions' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'} transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Bank Soal (${questions.length} Soal)</span>
+                    </button>
+                    <button onclick="switchAdminTab('settings')" class="py-4 font-semibold text-sm border-b-2 ${adminActiveTab === 'settings' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'} transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Pengaturan, Logo & Akun Admin</span>
+                    </button>
+                </div>
+
+                <!-- Admin Tab Contents -->
+                <div class="max-w-7xl w-full mx-auto p-6 flex-grow">
+                    ${adminActiveTab === 'submissions' ? renderAdminSubmissionsTab() : 
+                      adminActiveTab === 'questions' ? renderAdminQuestionsTab() : 
+                      renderAdminSettingsTab()}
+                </div>
+            </div>
+            `;
+        }
+
+        function switchAdminTab(tab) {
+            adminActiveTab = tab;
+            render();
+        }
+
+        function renderAdminSubmissionsTab() {
+            return `
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg">Daftar Hasil & Skor Siswa</h3>
+                        <p class="text-xs text-slate-500">Siswa diberi kesempatan mengerjakan maksimal 2 kali.</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="exportSubmissionsCSV()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow transition-all flex items-center space-x-2">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Export Rekap CSV</span>
+                        </button>
+                        <button onclick="clearSubmissionsData()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 py-2 rounded-xl text-xs font-semibold transition-all">
+                            Reset Data Nilai
+                        </button>
+                    </div>
+                </div>
+
+                ${studentSubmissions.length === 0 ? `
+                    <div class="text-center py-16 text-slate-400">
+                        <i class="fa-solid fa-folder-open text-4xl mb-3"></i>
+                        <p class="text-sm font-medium">Belum ada siswa yang mengirimkan jawaban asesmen.</p>
+                    </div>
+                ` : `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3.5">No</th>
+                                    <th class="p-3.5">Nama Lengkap Siswa</th>
+                                    <th class="p-3.5">Kelas</th>
+                                    <th class="p-3.5">No. Presensi</th>
+                                    <th class="p-3.5">Percobaan</th>
+                                    <th class="p-3.5">Skor</th>
+                                    <th class="p-3.5">Status</th>
+                                    <th class="p-3.5">Waktu Kirim</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                ${studentSubmissions.map((sub, idx) => `
+                                <tr class="hover:bg-slate-50/60 transition-all">
+                                    <td class="p-3.5 font-medium text-slate-500">${idx + 1}</td>
+                                    <td class="p-3.5 font-bold text-slate-800">${sub.name}</td>
+                                    <td class="p-3.5 text-slate-600">${sub.className}</td>
+                                    <td class="p-3.5 text-slate-600">${sub.number}</td>
+                                    <td class="p-3.5 text-slate-600">Ke-${sub.attempt}</td>
+                                    <td class="p-3.5 font-bold ${sub.score >= appConfig.kkm ? 'text-indigo-600' : 'text-amber-600'}">${sub.score}</td>
+                                    <td class="p-3.5">
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${sub.score >= appConfig.kkm ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
+                                            ${sub.status}
+                                        </span>
+                                    </td>
+                                    <td class="p-3.5 text-slate-500 text-xs">${sub.timestamp}</td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `}
+            </div>
+            `;
+        }
+
+        function renderAdminQuestionsTab() {
+            return `
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg">Bank Soal Asesmen (Total: ${questions.length} Soal)</h3>
+                        <p class="text-xs text-slate-500">Admin dapat mengedit butir pertanyaan asesmen.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    ${questions.map((q, idx) => `
+                    <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-bold uppercase">
+                                Soal No. ${idx + 1} (${q.type === 'mc' ? 'Pilihan Ganda' : q.type === 'complex' ? 'Pilihan Ganda Kompleks' : 'Menjodohkan'})
+                            </span>
+                            <button onclick="openEditQuestionModal(${idx})" class="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold shadow-sm transition-all">
+                                <i class="fa-solid fa-pen-to-square mr-1"></i>Edit Soal
+                            </button>
+                        </div>
+                        <div class="text-sm font-semibold text-slate-900">${q.question}</div>
+                        ${q.type !== 'matching' ? `
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                ${Object.entries(q.options).map(([k, val]) => `
+                                <div class="p-2.5 rounded-lg border ${Array.isArray(q.correct) ? q.correct.includes(k) : q.correct === k ? 'border-indigo-500 bg-indigo-50 font-bold text-indigo-900' : 'border-slate-200 bg-white text-slate-700'}">
+                                    <span class="font-bold mr-1.5">${k}.</span>${val}
+                                </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-xs space-y-1 bg-white p-3 rounded-lg border border-slate-200">
+                                <div class="font-bold text-slate-600 mb-1">Pasangan Benar:</div>
+                                ${q.pairs.map((p, pIdx) => `<div class="text-slate-700">• ${p.premise} ➔ <span class="font-semibold text-indigo-700">${p.match}</span></div>`).join('')}
+                            </div>
+                        `}
+                    </div>
+                    `).join('')}
+                </div>
+            </div>
+            `;
+        }
+
+        function renderAdminSettingsTab() {
+            return `
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 max-w-2xl mx-auto space-y-6">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Pengaturan Logo, Mata Pelajaran & Akun Admin</h3>
+                    <p class="text-xs text-slate-500">Sesuaikan informasi logo, identitas penyusun Lil Muauwanah, serta kredensial akses admin.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Sekolah / Logo Text</label>
+                        <input type="text" id="settingLogo" value="${appConfig.logoText}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Mata Pelajaran</label>
+                            <input type="text" id="settingSubject" value="${appConfig.subject}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Kelas</label>
+                            <input type="text" id="settingGrade" value="${appConfig.grade}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Guru Penyusun</label>
+                            <input type="text" id="settingTeacher" value="${appConfig.teacher}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">KKM Kelulusan</label>
+                            <input type="number" id="settingKkm" value="${appConfig.kkm}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Durasi (Menit)</label>
+                            <input type="number" id="settingDuration" value="${appConfig.durationMinutes}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-100 my-4">
+
+                    <h4 class="font-bold text-slate-800 text-sm">Ganti Username & Password Admin</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username Admin Baru</label>
+                            <input type="text" id="settingAdminUser" value="${appConfig.adminCreds.username}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password Admin Baru</label>
+                            <input type="text" id="settingAdminPass" value="${appConfig.adminCreds.password}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                    </div>
+
+                    <button onclick="saveAdminSettings()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all text-sm">
+                        Simpan Perubahan Pengaturan
+                    </button>
+                </div>
+            </div>
+            `;
+        }
+
+        function saveAdminSettings() {
+            appConfig.logoText = document.getElementById('settingLogo').value.trim() || appConfig.logoText;
+            appConfig.subject = document.getElementById('settingSubject').value.trim() || appConfig.subject;
+            appConfig.grade = document.getElementById('settingGrade').value.trim() || appConfig.grade;
+            appConfig.teacher = document.getElementById('settingTeacher').value.trim() || appConfig.teacher;
+            appConfig.kkm = parseInt(document.getElementById('settingKkm').value) || 80;
+            appConfig.durationMinutes = parseInt(document.getElementById('settingDuration').value) || 90;
+
+            const newU = document.getElementById('settingAdminUser').value.trim();
+            const newP = document.getElementById('settingAdminPass').value.trim();
+            if (newU && newP) {
+                appConfig.adminCreds = { username: newU, password: newP };
+            }
+
+            localStorage.setItem('muallimin_pkn9_config_v1', JSON.stringify(appConfig));
+            showModal('Berhasil', 'Pengaturan aplikasi dan kredensial admin berhasil disimpan!', 'success');
+            render();
+        }
+
+        function testExamAsStudent() {
+            currentUser = {
+                role: 'student',
+                name: '[UJI COBA ADMIN] ' + appConfig.teacher,
+                className: '9A',
+                number: '99',
+                studentId: 'admin_test_mode_pkn9',
+                attemptCount: 1,
+                isTestMode: true
+            };
+
+            examState = {
+                answers: {},
+                timeLeft: appConfig.durationMinutes * 60,
+                timerInterval: null,
+                isSubmitted: false
+            };
+
+            currentView = 'exam';
+            render();
+            startExamTimer();
+        }
+
+        function exportSubmissionsCSV() {
+            if (studentSubmissions.length === 0) {
+                showModal('Informasi', 'Belum ada data nilai siswa untuk diexport.', 'warning');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,No,Nama Siswa,Kelas,No Presensi,Percobaan Ke,Skor,Status,Waktu Kirim\n";
+            studentSubmissions.forEach((sub, idx) => {
+                csvContent += `${idx + 1},"${sub.name}","${sub.className}",${sub.number},${sub.attempt},${sub.score},"${sub.status}","${sub.timestamp}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Rekap_Nilai_Asesmen_${appConfig.subject}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clearSubmissionsData() {
+            showModal('Konfirmasi Reset', 'Apakah Anda yakin ingin menghapus seluruh data rekap nilai siswa?', 'warning', [
+                { text: 'Batal', class: 'bg-slate-200 text-slate-800 px-4 py-2 rounded-xl font-medium', onClick: () => {} },
+                { text: 'Ya, Hapus Semua', class: 'bg-rose-600 text-white px-4 py-2 rounded-xl font-medium', onClick: () => {
+                    studentSubmissions = [];
+                    localStorage.removeItem('muallimin_pkn9_submissions_v1');
+                    render();
+                    showModal('Berhasil', 'Data rekap nilai berhasil dikosongkan.', 'success');
+                }}
+            ]);
+        }
+
+        function openEditQuestionModal(idx) {
+            const q = questions[idx];
+            let modalHtml = `
+            <div class="space-y-3 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Pertanyaan Soal No. ${idx + 1}</label>
+                    <textarea id="editQText" rows="3" class="w-full p-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">${q.question}</textarea>
+                </div>
+            `;
+
+            if (q.type !== 'matching') {
+                modalHtml += `<div class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-600">Pilihan Jawaban</label>`;
+                Object.entries(q.options).forEach(([k, val]) => {
+                    modalHtml += `<div class="flex items-center space-x-2">
+                        <span class="font-bold text-sm w-6">${k}.</span>
+                        <input type="text" id="editOpt_${k}" value="${val}" class="w-full p-2 rounded-lg border border-slate-300 text-sm outline-none">
+                    </div>`;
+                });
+                modalHtml += `</div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kunci Jawaban Benar ${q.type === 'complex' ? '(Pisahkan koma, contoh: A,C)' : ''}</label>
+                    <input type="text" id="editCorrect" value="${Array.isArray(q.correct) ? q.correct.join(',') : q.correct}" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm outline-none font-bold text-indigo-700">
+                </div>`;
+            } else {
+                modalHtml += `<p class="text-xs text-amber-600 italic">Soal menjodohkan dapat dikonfigurasi pada bank data soal utama.</p>`;
+            }
+
+            modalHtml += `</div>`;
+
+            showModal(`Edit Soal No. ${idx + 1}`, modalHtml, 'info', [
+                { text: 'Batal', class: 'bg-slate-200 text-slate-800 px-4 py-2 rounded-xl text-sm font-medium', onClick: () => {} },
+                { text: 'Simpan Perubahan', class: 'bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow', onClick: () => {
+                    const newText = document.getElementById('editQText').value.trim();
+                    if (newText) q.question = newText;
+
+                    if (q.type !== 'matching') {
+                        Object.keys(q.options).forEach(k => {
+                            const optVal = document.getElementById(`editOpt_${k}`).value.trim();
+                            if (optVal) q.options[k] = optVal;
+                        });
+                        const corrInput = document.getElementById('editCorrect').value.trim();
+                        if (q.type === 'complex') {
+                            q.correct = corrInput.toUpperCase().split(',').map(s => s.trim());
+                        } else {
+                            q.correct = corrInput.toUpperCase();
+                        }
+                    }
+
+                    localStorage.setItem('muallimin_pkn9_questions_v1', JSON.stringify(questions));
+                    render();
+                    showModal('Berhasil', 'Butir soal berhasil diperbarui!', 'success');
+                }}
+            ]);
+        }
+
+        // Initialize App on load
+        window.onload = function() {
+            render();
+        };
+    </script>
+</body>
+</html>
